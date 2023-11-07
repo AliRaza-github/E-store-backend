@@ -6,7 +6,6 @@ const { registerSchema ,loginSchema } = require("../utils/joiSchema")
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 
-
 const register = async (req, res) => {
     const { first_name, last_name, email, password } = req.body;
     const { error, value } = registerSchema.validate(req.body);
@@ -20,7 +19,6 @@ const register = async (req, res) => {
         }
 
         const hashPassword = await bcrypt.hash(password, salt);
-
         const user = new User({
             first_name: first_name,
             last_name: last_name,
@@ -28,14 +26,12 @@ const register = async (req, res) => {
             password: hashPassword,
         });
         const savedUser = await user.save();
-
         return res.status(200).json({ error: null, data: savedUser, message: "User saved successfully" });
 
     } catch (error) {
         return res.status(500).json({ error: error.message || error, data: null, message: "Error in Registration " })
     };
 };
-
 
 const login = async (req, res) => {
     const { email, password } = req.body;
