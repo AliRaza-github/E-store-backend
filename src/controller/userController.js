@@ -2,11 +2,17 @@ require("dotenv").config()
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
+const { registerSchema ,loginSchema } = require("../utils/joiSchema")
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 
+
 const register = async (req, res) => {
     const { first_name, last_name, email, password } = req.body;
+    const { error, value } = registerSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message, data: null, message: "Validation error" });
+    }
     try {
         const userData = await User.findOne({ email: email }).select({ email: 1 })
         if (userData) {
@@ -30,8 +36,13 @@ const register = async (req, res) => {
     };
 };
 
+
 const login = async (req, res) => {
     const { email, password } = req.body;
+    const { error, value } = loginSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message, data: null, message: "Validation error" });
+    }
     try {
         const user = await User.findOne({ email: email });
         if (!user) {
