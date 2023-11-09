@@ -7,7 +7,7 @@ const { sendAccVerificationEmail } = require("../utils/utilMalier")
 const { registerSchema, loginSchema } = require("../utils/joiSchema")
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
-const baseUrl= process.env.BASE_URL;
+const baseUrl = process.env.BASE_URL;
 
 const register = async (req, res) => {
     const { first_name, last_name, email, password } = req.body;
@@ -32,19 +32,20 @@ const register = async (req, res) => {
         });
         const savedUser = await user.save();
         const link = `${baseUrl}api/users/verify-email/${savedUser._id}`;
-        const result = sendAccVerificationEmail(savedUser.email,link)
+        const result = sendAccVerificationEmail(savedUser.email, link)
+
         if (result) {
             return res.status(200).json({ error: null, data: null, message: "Verification email sent successfully" });
-          } else {
+        } else {
             return res.status(400).json({
-              error: "Error in sending verification email",
-              data: null,
-              message: "Error in sending verification email"
+                error: "Error in sending verification email",
+                data: null,
+                message: "Error in sending verification email"
             });
-          };
-        } catch (error) {
-          return res.status(500).json({ error: error.message || error, data: null, message: "Error in registration" });
-        }
+        };
+    } catch (error) {
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in registration" });
+    }
 };
 
 const login = async (req, res) => {

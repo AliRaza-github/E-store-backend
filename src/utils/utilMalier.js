@@ -4,7 +4,7 @@ const PASS = process.env.PASS;
 const appName = process.env.APP_NAME;
 
 const sendAccVerificationEmail = async (email, link) => {
-    const htmlText = `
+  const htmlText = `
   <html>
     <head>
       <style>
@@ -22,26 +22,26 @@ const sendAccVerificationEmail = async (email, link) => {
     </body>
   </html>
 `;
-    let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: USER,
-            pass: PASS
-        }
-    });
-
-    var mailOptions = {
-        from: USER,
-        to: email,
-        subject: "Account verification",
-        html: htmlText
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        return true;
-    } catch (error) {
-        return false;
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: USER,
+      pass: PASS
     }
+  });
+
+  var mailOptions = {
+    from: USER,
+    to: email,
+    subject: "Account verification",
+    html: htmlText
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Email sending error:", error);
+    return false;
+  }
 };
 module.exports = { sendAccVerificationEmail };
