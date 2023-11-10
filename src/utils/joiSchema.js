@@ -17,9 +17,9 @@ const loginSchema = joi.object({
 });
 
 const createProductSchema = joi.object({
-    title: string,
-    description: string,
-    weight_in_grams: joi.number().integer().required(),
+    title:  joi.string().required(),
+    description:  joi.string().required(),
+    weight_in_grams: joi.number().required(),
     price: number,
     brand: joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required(),
     model: number,
