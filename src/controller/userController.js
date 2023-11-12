@@ -2,7 +2,7 @@ require("dotenv").config()
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
-const { registerSchema ,loginSchema } = require("../utils/joiSchema")
+const { registerSchema, loginSchema } = require("../utils/joiSchema")
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 

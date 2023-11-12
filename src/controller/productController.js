@@ -1,10 +1,10 @@
 const Product = require("../model/productModel");
-const { createProductSchema } = require("../utils/joiSchema");
+const { productSchema } = require("../utils/joiSchema");
 
 
 const createProduct = async (req, res) => {
     const { title, description, weight_in_grams, price, brand, model } = req.body;
-    const { error, value } = createProductSchema.validate(req.body, { abortEarly: false });
+    const { error, value } = productSchema.validate(req.body, { abortEarly: false });
     if (error) {
         return res.status(400).json({ error: error.message, data: null, message: "Validation error" });
     }
@@ -25,7 +25,7 @@ const createProduct = async (req, res) => {
     };
 };
 
-const singleProduct = async (req, res) => {
+const getSingleProduct = async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findById(id);
@@ -67,7 +67,10 @@ const deleteProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { title, description, weight_in_grams, price, brand, model } = req.body;
-
+    const { error, value } = productSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+        return res.status(400).json({ error: error.message, data: null, message: "Validation error" });
+    }
     try {
         const updateProduct = await Product.findByIdAndUpdate(id, {
             title: title,
@@ -88,4 +91,4 @@ const updateProduct = async (req, res) => {
     }
 }
 
-module.exports = { createProduct, deleteProduct, singleProduct, getAllProduct, updateProduct }
+module.exports = { createProduct, deleteProduct, getSingleProduct, getAllProduct, updateProduct }
