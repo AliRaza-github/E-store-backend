@@ -1,10 +1,13 @@
 require("dotenv").config()
+const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
-const { registerSchema, loginSchema } = require("../utils/joiSchema")
+const { sendAccVerificationEmail } = require("../utils/utilMalier"); 
+const { registerSchema, loginSchema } = require("../utils/joiSchema");
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
+const baseUrl = process.env.BASE_URL;
 
 const register = async (req, res) => {
     const { first_name, last_name, email, password } = req.body;
@@ -18,19 +21,31 @@ const register = async (req, res) => {
             return res.status(400).json({ error: "Email already exist", data: null, message: "Email already exist" });
         }
 
+        const token = crypto.randomBytes(16).toString("hex");
         const hashPassword = await bcrypt.hash(password, salt);
         const user = new User({
             first_name: first_name,
             last_name: last_name,
             email: email,
             password: hashPassword,
+            email_verify_token: token,
         });
         const savedUser = await user.save();
-        return res.status(200).json({ error: null, data: savedUser, message: "User saved successfully" });
+        const link = `${baseUrl}api/users/verify-email/${savedUser._id}`;
+        const result = sendAccVerificationEmail(savedUser.email, link)
 
+        if (result) {
+            return res.status(200).json({ error: null, data: null, message: "Verification email sent successfully" });
+        } else {
+            return res.status(400).json({
+                error: "Error in sending verification email",
+                data: null,
+                message: "Error in sending verification email"
+            });
+        };
     } catch (error) {
-        return res.status(500).json({ error: error.message || error, data: null, message: "Error in Registration " })
-    };
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in registration" });
+    }
 };
 
 const login = async (req, res) => {

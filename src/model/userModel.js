@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         require: true
     },
+    email_verify_token: {
+        type: String,
+    }
 }
     , { timestamps: true }
 )
