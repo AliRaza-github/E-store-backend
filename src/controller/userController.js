@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
-const { sendAccVerificationEmail } = require("../utils/utilMalier"); 
+const { sendAccVerificationEmail, resetPasswordEmail } = require("../utils/utilMalier");
 const { registerSchema, loginSchema } = require("../utils/joiSchema");
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
@@ -86,6 +86,36 @@ const login = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: error.message || error, data: null, message: "Error in login" })
     }
-}
+};
 
-module.exports = { register, login }
+const resetPasswordRequest = async (req, res) => {
+    const { email } = req.body
+    try {
+        // const token = crypto.randomBytes(16).toString("hex");
+        const userData = await User.findOne({ email });
+        if (!userData) {
+            return res.status(400).json({ error: "Email not found", data: null, message: "Email not found" });
+        }
+
+        const resetPasswordEmailLink = `${baseUrl}frontend-reset-url?id=${userData._id}&token=${userData.email_verify_token}`;
+        const result = await resetPasswordEmail(userData.email, resetPasswordEmailLink);
+        if (result) {
+            return res.status(200).json({
+                error: null,
+                data: null,
+                message: "Password reset link sent successfully. Please check your email for further instructions"
+            });
+
+        } else {
+            return res.status(400).json({
+                error: "Error in sending password reset link",
+                data: null,
+                message: "Error in sending password reset link"
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in sending email" });
+    };
+};
+
+module.exports = { register, login, resetPasswordRequest }
