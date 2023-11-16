@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../model/userModel");
 const { sendAccVerificationEmail, resetPasswordEmail } = require("../utils/utilMalier");
-const { registerSchema, loginSchema } = require("../utils/joiSchema");
+const { registerSchema, loginSchema, resetPasswordSchema } = require("../utils/joiSchema");
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 const baseUrl = process.env.BASE_URL;
@@ -91,7 +91,6 @@ const login = async (req, res) => {
 const resetPasswordRequest = async (req, res) => {
     const { email } = req.body
     try {
-        // const token = crypto.randomBytes(16).toString("hex");
         const userData = await User.findOne({ email });
         if (!userData) {
             return res.status(400).json({ error: "Email not found", data: null, message: "Email not found" });
@@ -118,4 +117,28 @@ const resetPasswordRequest = async (req, res) => {
     };
 };
 
-module.exports = { register, login, resetPasswordRequest }
+const resetPassword = async (req, res) => {
+    const {id} = req.params;
+    const password = req.body.password;
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message, data: null, message: "Validation error" });
+    }
+    try {
+        const user = await User.findOne({
+            _id: id,
+        });
+        if (!user) {
+            return res.status(404).json({ error: "User not found", data: null, message: "User not found" });
+        }
+        const hashPassword = await bcrypt.hash(password, salt);
+        user.password = hashPassword;
+        await user.save();
+        return res.status(200).json({ error: null, data: null, message: "Password reset successfully. You can now log in with your new password" });
+    }
+    catch (error) {
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in reset password" });
+    }
+};
+
+module.exports = { register, login, resetPasswordRequest, resetPassword }
