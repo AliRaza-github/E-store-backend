@@ -110,7 +110,7 @@ const userProfileUpdate = async (req, res) => {
         return res.status(500).json({ error: error.message || error, data: null, message: "Error in profile update" })
     }
 };
-/////////////////////
+
 
 const uploadProfileImage = async (req, res) => {
     const { id } = req.decoded.id;
@@ -139,11 +139,5 @@ const uploadProfileImage = async (req, res) => {
         return res.status(500).json({ error: error.message || error, data: null, message: "Failed to upload profile image" });
     }
 };
-
-
-
-
-
-
 
 module.exports = { register, login, userProfileUpdate, uploadProfileImage }
