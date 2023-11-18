@@ -16,6 +16,21 @@ const userSchema = new mongoose.Schema({
     },
     email_verify_token: {
         type: String,
+    },
+    state:{
+        type:String
+    },
+    city:{
+type:String
+    },
+    zip_code:{
+        type:Number
+    },
+    address:{
+        type:String
+    },
+    profile_image:{
+        type:String
     }
 }
     , { timestamps: true }
