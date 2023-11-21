@@ -94,9 +94,8 @@ const login = async (req, res) => {
 const userProfileUpdate = async (req, res) => {
     const { id } = req.params;
     const { state, city, zip_code, address } = req.body;
-    console.log("log0")
+
     try {
-        console.log("log1")
         const userData = await User.findByIdAndUpdate({ _id: id }, {
             state: state,
             city: city,
@@ -104,7 +103,6 @@ const userProfileUpdate = async (req, res) => {
             address: address
         }, { new: true });
 
-        console.log("log2", userData)
         return res.status(200).json({ error: null, data: userData, message: "Profile update successfully" });
     } catch (error) {
         return res.status(500).json({ error: error.message || error, data: null, message: "Error in profile update" })
@@ -113,10 +111,14 @@ const userProfileUpdate = async (req, res) => {
 
 
 const uploadProfileImage = async (req, res) => {
-    const { id } = req.decoded.id;
-    
+    const userId = req.decoded.id;
     try {
-        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: null, data: null, message: "User not found" });
+        }
+
+
         const fileStorage = multer.diskStorage({
             destination: (req, file, cb) => {
                 const destination = path.join(__dirname, "../assets");
@@ -125,15 +127,34 @@ const uploadProfileImage = async (req, res) => {
             filename: (req, file, cb) => {
                 cb(null, Date.now() + "--" + file.originalname);
             },
+
         });
 
         const upload = multer({ storage: fileStorage }).single("image");
-        upload(req, res, function (err) {
+        upload(req, res, async function (err) {
             if (err) {
                 return res.status(500).json({ error: err.message || err, data: null, message: "Failed to upload profile image" });
+            };
+            const imageName = req.file.path.replace(/^.*[\\\/]/, "");
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                { profile_image: imageName },
+                { new: true }
+            );
+            if (!updatedUser) {
+                return res.status(500).json({ error: "User not found", data: null, message: "User not found" });
             }
-            return res.status(200).json({ error: null, data: null, message: "Profile image uploaded successfully" });
         });
+        const oldProfileImage = user.profile_image;
+        if (oldProfileImage) {
+            const filePath = path.join(__dirname, '../assets', oldProfileImage);
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error("Failed to delete old profile image:", err);
+                }
+            });
+        };
+        return res.status(200).json({ error: null, data: null, message: "Profile image uploaded successfully" });
 
     } catch (error) {
         return res.status(500).json({ error: error.message || error, data: null, message: "Failed to upload profile image" });
