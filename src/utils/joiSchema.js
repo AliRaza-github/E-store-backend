@@ -1,4 +1,5 @@
 const joi = require("joi");
+const { default: mongoose } = require("mongoose");
 const string = joi.string().pattern(new RegExp('^[a-zA-Z]{3,30}$')).required();
 const email = joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required();
 const password = joi.string().pattern(new RegExp('^[a-zA-Z0-9]{6,8}$')).required();
@@ -25,4 +26,9 @@ const productSchema = joi.object({
     model: number,
 });
 
-module.exports = { registerSchema, loginSchema, productSchema }
+const resetPasswordSchema = joi.object({
+    password: password,
+
+})
+
+module.exports = { registerSchema, loginSchema, productSchema, resetPasswordSchema }

@@ -6,8 +6,8 @@ const jwt = require("jsonwebtoken");
 const fs = require('fs');
 const path = require('path');
 const User = require("../model/userModel");
-const { sendAccVerificationEmail } = require("../utils/utilMalier");
-const { registerSchema, loginSchema } = require("../utils/joiSchema");
+const { sendAccVerificationEmail, resetPasswordEmail } = require("../utils/utilMalier");
+const { registerSchema, loginSchema, resetPasswordSchema } = require("../utils/joiSchema");
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 const baseUrl = process.env.BASE_URL;
@@ -109,7 +109,6 @@ const userProfileUpdate = async (req, res) => {
     }
 };
 
-
 const uploadProfileImage = async (req, res) => {
     const userId = req.decoded.id;
     try {
@@ -117,7 +116,6 @@ const uploadProfileImage = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: null, data: null, message: "User not found" });
         }
-
 
         const fileStorage = multer.diskStorage({
             destination: (req, file, cb) => {
@@ -127,7 +125,7 @@ const uploadProfileImage = async (req, res) => {
             filename: (req, file, cb) => {
                 cb(null, Date.now() + "--" + file.originalname);
             },
-
+            
         });
 
         const upload = multer({ storage: fileStorage }).single("image");
@@ -161,4 +159,58 @@ const uploadProfileImage = async (req, res) => {
     }
 };
 
-module.exports = { register, login, userProfileUpdate, uploadProfileImage }
+const resetPasswordRequest = async (req, res) => {
+    const { email } = req.body
+    try {
+        const userData = await User.findOne({ email });
+        if (!userData) {
+            return res.status(400).json({ error: "Email not found", data: null, message: "Email not found" });
+        }
+
+        const resetPasswordEmailLink = `${baseUrl}frontend-reset-url?id=${userData._id}&token=${userData.email_verify_token}`;
+        const result = await resetPasswordEmail(userData.email, resetPasswordEmailLink);
+        if (result) {
+            return res.status(200).json({
+                error: null,
+                data: null,
+                message: "Password reset link sent successfully. Please check your email for further instructions"
+            });
+
+        } else {
+            return res.status(400).json({
+                error: "Error in sending password reset link",
+                data: null,
+                message: "Error in sending password reset link"
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in sending email" });
+    };
+};
+
+const resetPassword = async (req, res) => {
+    const { id } = req.params;
+    const password = req.body.password;
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message, data: null, message: "Validation error" });
+    }
+    try {
+        const user = await User.findOne({
+            _id: id,
+        });
+        if (!user) {
+            return res.status(404).json({ error: "User not found", data: null, message: "User not found" });
+        }
+        const hashPassword = await bcrypt.hash(password, salt);
+        user.password = hashPassword;
+        await user.save();
+        return res.status(200).json({ error: null, data: null, message: "Password reset successfully. You can now log in with your new password" });
+    }
+    catch (error) {
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in reset password" });
+    }
+};
+
+module.exports = { register, login, resetPasswordRequest, resetPassword, uploadProfileImage, userProfileUpdate }
+
