@@ -86,4 +86,4 @@ const resetPasswordEmail = async (email, resetPasswordEmailLink) => {
   }
 };
 
-module.exports = { resetPasswordEmail, resetPasswordEmail };
+module.exports = { sendAccVerificationEmail, resetPasswordEmail };

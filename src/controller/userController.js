@@ -8,6 +8,7 @@ const path = require('path');
 const User = require("../model/userModel");
 const { sendAccVerificationEmail, resetPasswordEmail } = require("../utils/utilMalier");
 const { registerSchema, loginSchema, resetPasswordSchema } = require("../utils/joiSchema");
+const { error } = require("console");
 const salt = parseInt(process.env.SALT);
 const jwtSecret = process.env.JWT_SECRET;
 const baseUrl = process.env.BASE_URL;
@@ -62,6 +63,12 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: "Invalid email or password", data: null, message: "Invalid email or password" });
         }
+        if (!user.email_verified) {
+            return res.status(400).json({ error: "Please verify your email", data: null, message: "Please verify your email" });
+          }
+          if (user.status !== 'active') {
+            return res.status(403).json({ error: "Inactive user account", data: null, message: "Inactive user account" });
+          }
 
         const matchPassword = await bcrypt.compare(password, user.password);
 
@@ -125,7 +132,7 @@ const uploadProfileImage = async (req, res) => {
             filename: (req, file, cb) => {
                 cb(null, Date.now() + "--" + file.originalname);
             },
-            
+
         });
 
         const upload = multer({ storage: fileStorage }).single("image");
@@ -212,5 +219,23 @@ const resetPassword = async (req, res) => {
     }
 };
 
-module.exports = { register, login, resetPasswordRequest, resetPassword, uploadProfileImage, userProfileUpdate }
+const activateUser = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const token = req.params.token;
+        let user = await User.findById({ _id: id, email_verify_token: token })
+        if (!user) {
+            return res.status(404).json({ error: error.message || "User not found", data: null, message: "User not found" })
+        }
+        user.status = 'active',
+        user.email_verified = true,
+        user.email_verify_token = undefined
+        await user.save();
+        return res.status(200).json({ error: null, data: null, message: "Email verified successfully" });
+    } catch (error) {        
+        return res.status(500).json({ error: error.message || error, data: null, message: "Error in email verification" });
+    }
+};
+
+module.exports = { register, login,activateUser, resetPasswordRequest, resetPassword, uploadProfileImage, userProfileUpdate }
 
